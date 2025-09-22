@@ -15,7 +15,7 @@ def rekuest(URL, params=None):
         if resp.status_code == 200:
             return resp.json()
     except Exception as e:
-        Exception("Unable to make Rekor API request:". e)
+        Exception("Unable to make Rekor API request:", e)
 
 
 def get_log_entry(log_index, debug=False):
