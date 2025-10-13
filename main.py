@@ -4,6 +4,7 @@ Entrypoint to the rekor CLI util.
 
 import argparse
 import json
+import os
 import base64
 import requests
 from util import extract_public_key, verify_artifact_signature
@@ -42,6 +43,13 @@ def get_log_entry(log_index, debug=False):
         (object)            -   Rekor entry log.
     """
     # verify that log index value is sane
+    try:
+        index = int(log_index)
+        if index < 0:
+            raise ValueError("Invalid log_entry")
+    except ValueError:
+        print("Invalid log entry")
+        return None
     data = rekor_request("/api/v1/log/entries",
                          {"logIndex": log_index}, debug=debug)
     return data[list(data.keys())[0]]
@@ -76,6 +84,14 @@ def inclusion(log_index, artifact_filepath, debug=False):
     """
     # verify that log index and artifact filepath values are sane
     log_data = get_log_entry(log_index, debug)
+
+    if not os.path.exists(artifact_filepath):
+        print("Artifact doesn't exist.")
+        return False
+    if not os.path.isfile(artifact_filepath):
+        print("Artifact is not a file.")
+        return False
+
     log_body = log_data['body']
     log_json = json.loads(base64.b64decode(log_body))
 
