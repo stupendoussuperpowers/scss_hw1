@@ -1,29 +1,62 @@
+"""
+Entrypoint to the rekor CLI util.
+"""
+
 import argparse
-import requests
 import json
 import base64
+import requests
 from util import extract_public_key, verify_artifact_signature
-from merkle_proof import DefaultHasher, verify_consistency, verify_inclusion, compute_leaf_hash
+from merkle_proof import DefaultHasher, verify_consistency, \
+    verify_inclusion, compute_leaf_hash, RootMismatchError
 
 REKOR_URL = "https://rekor.sigstore.dev"
 
 
-def rekuest(URL, params=None):
+def rekor_request(url, params=None, debug=False):
+    """Util function to make requests to rekor."""
     try:
-        resp = requests.get(f"{REKOR_URL}{URL}", params=params, timeout=10)
-        if resp.status_code == 200:
-            return resp.json()
-    except Exception as e:
-        Exception("Unable to make Rekor API request:", e)
+        resp = requests.get(f"{REKOR_URL}{url}", params=params, timeout=10)
+        resp.raise_for_status()
+
+        json_resp = resp.json()
+        if debug:
+            print(f"Response from {url}: {json_resp}")
+        return json_resp
+    except requests.HTTPError as err:
+        print("Rekor returned invalid response:", err)
+        return None
+    except TimeoutError as err:
+        print("Rekor request timed out:", err)
+        return None
 
 
 def get_log_entry(log_index, debug=False):
+    """
+    Fetch and return the rekor log entry for a given index.
+
+    Input:
+        log_index   (int)   -   Log index to lookup.
+        debug       (bool)  -   Output debug logs.
+    Returns:
+        (object)            -   Rekor entry log.
+    """
     # verify that log index value is sane
-    data = rekuest("/api/v1/log/entries", {"logIndex": log_index})
+    data = rekor_request("/api/v1/log/entries",
+                         {"logIndex": log_index}, debug=debug)
     return data[list(data.keys())[0]]
 
 
 def get_verification_proof(log_index, debug=False):
+    """
+    Return the inclusion proof stored for a given log. 
+
+    Input:
+        log_index   (int)   -   Log index to lookup.
+        debug       (bool)  -   Output debug logs.
+    Returns:
+        (object)            -   Inclusion proof for the log entry.
+    """
     log_data = get_log_entry(log_index, debug)
 
     proof = log_data["verification"]["inclusionProof"]
@@ -31,47 +64,81 @@ def get_verification_proof(log_index, debug=False):
 
 
 def inclusion(log_index, artifact_filepath, debug=False):
+    """
+    Verify the inclusion proof for a given log.
+
+    Input:
+        log_index           (int)   -   Log index to verify.
+        artifact_filepath   (str)   -   artifact to verify.
+        debug               (bool)  -   Output debug logs.
+    Returns:
+        (bool)                      -   Status of verification.
+    """
     # verify that log index and artifact filepath values are sane
     log_data = get_log_entry(log_index, debug)
-    _body = log_data['body']
-    body_json = json.loads(base64.b64decode(_body))
+    log_body = log_data['body']
+    log_json = json.loads(base64.b64decode(log_body))
 
-    _sig = body_json['spec']['signature']['content']
-    signature = base64.b64decode(_sig)
+    sig_raw = log_json['spec']['signature']['content']
+    signature = base64.b64decode(sig_raw)
 
-    _cert = body_json['spec']['signature']['publicKey']['content']
-    certificate = base64.b64decode(_cert)
+    cert_raw = log_body['spec']['signature']['publicKey']['content']
+    certificate = base64.b64decode(cert_raw)
 
     public_key = extract_public_key(certificate)
 
-    try:
-        verify_artifact_signature(signature, public_key, artifact_filepath)
-    except Exception as e:
-        print("Artifact signature verification failed:", e)
+    if not verify_artifact_signature(signature, public_key, artifact_filepath):
+        return False
 
     proof = get_verification_proof(log_index)
+    if not proof:
+        return False
 
-    tree_size = proof['treeSize']
-    leaf_hash = compute_leaf_hash(_body)
-    root_hash = proof['rootHash']
-    hashes = proof['hashes']
-    index = proof['logIndex']
+    leaf_hash = compute_leaf_hash(log_body)
 
     try:
-        verify_inclusion(DefaultHasher, index, tree_size,
-                         leaf_hash, hashes, root_hash)
-    except Exception as e:
-        print("Verify Inclusion failed:", e)
+        verify_inclusion(
+            DefaultHasher,
+            proof['logIndex'],
+            proof['treeSize'],
+            leaf_hash,
+            proof['hashes'],
+            proof['rootHash']
+        )
+    except RootMismatchError as e:
+        if debug:
+            print("Verify Inclusion failed:", e)
+        return False
 
     print("Offline verification successful")
+    return True
 
 
 def get_latest_checkpoint(debug=False):
-    data = rekuest("/api/v1/log")
+    """
+    Get the latest checkpoint from Rekor's log.
+
+    Returns:
+        (object)    -       Body for the latest checkpoint.
+    """
+    data = rekor_request("/api/v1/log", debug=debug)
     return data
 
 
 def consistency(prev_checkpoint, debug=False):
+    """
+    Check if the input checkpoint is consistent with the
+    latest checkpoint on Rekor.
+
+    Input:
+        prev_checkpoint (object)    -   Checkpoint: {
+                                            treeSize,
+                                            rootHash,
+                                            treeID,
+                                        }
+    Returns:
+        (object)                    -   Body for the latest checkpoint.
+    """
     # verify that prev checkpoint is not empty
     # get_latest_checkpoint()
     chkpoint = get_latest_checkpoint(debug)
@@ -81,7 +148,7 @@ def consistency(prev_checkpoint, debug=False):
     root1 = prev_checkpoint['rootHash']
     root2 = chkpoint['rootHash']
 
-    proof = rekuest("/api/v1/log/proof", {
+    proof = rekor_request("/api/v1/log/proof", {
         "lastSize": size2,
         "firstSize": size1,
         "treeID": chkpoint["treeID"]
@@ -89,13 +156,14 @@ def consistency(prev_checkpoint, debug=False):
 
     try:
         verify_consistency(DefaultHasher, size1, size2, proof, root1, root2)
-    except Exception as e:
+    except RootMismatchError as e:
         print("Consistency verification failed:", e)
 
     print("Consitency verification successful")
 
 
 def main():
+    """CLI parsing"""
     debug = False
     parser = argparse.ArgumentParser(description="Rekor Verifier")
     parser.add_argument('-d', '--debug', help='Debug mode',
