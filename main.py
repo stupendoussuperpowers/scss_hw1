@@ -1,17 +1,16 @@
 import argparse
-from util import extract_public_key, verify_artifact_signature
-from merkle_proof import DefaultHasher, verify_consistency, verify_inclusion, compute_leaf_hash
-
 import requests
 import json
 import base64
+from util import extract_public_key, verify_artifact_signature
+from merkle_proof import DefaultHasher, verify_consistency, verify_inclusion, compute_leaf_hash
 
 REKOR_URL = "https://rekor.sigstore.dev"
 
 
 def rekuest(URL, params=None):
     try:
-        resp = requests.get(f"{REKOR_URL}{URL}", params=params)
+        resp = requests.get(f"{REKOR_URL}{URL}", params=params, timeout=10)
         if resp.status_code == 200:
             return resp.json()
     except Exception as e:

@@ -10,11 +10,11 @@ from cryptography.exceptions import InvalidSignature
 
 # extracts and returns public key from a given cert (in pem format)
 def extract_public_key(cert):
-# read the certificate
-#    with open("cert.pem", "rb") as cert_file:
-#        cert_data = cert_file.read()
+    # read the certificate
+    #    with open("cert.pem", "rb") as cert_file:
+    #        cert_data = cert_file.read()
 
-# load the certificate
+    # load the certificate
     certificate = x509.load_pem_x509_certificate(cert, default_backend())
 
 # extract the public key
@@ -33,12 +33,13 @@ def extract_public_key(cert):
 
     return pem_public_key
 
+
 def verify_artifact_signature(signature, public_key, artifact_filename):
     # load the public key
     # with open("cert_public.pem", "rb") as pub_key_file:
     #    public_key = load_pem_public_key(pub_key_file.read())
 
-        # load the signature
+    # load the signature
     #    with open("hello.sig", "rb") as sig_file:
     #        signature = sig_file.read()
 
@@ -55,6 +56,6 @@ def verify_artifact_signature(signature, public_key, artifact_filename):
             ec.ECDSA(hashes.SHA256())
         )
     except InvalidSignature as e:
-        print("Signature is invalid")
+        print("Signature is invalid:", e)
     except Exception as e:
         print("Exception in verifying artifact signature:", e)
