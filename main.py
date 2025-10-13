@@ -1,3 +1,7 @@
+"""
+Entrypoint to the rekor CLI util.
+"""
+
 import argparse
 import requests
 import json
@@ -9,6 +13,7 @@ REKOR_URL = "https://rekor.sigstore.dev"
 
 
 def rekuest(URL, params=None):
+    """Util function to make requests to rekor."""
     try:
         resp = requests.get(f"{REKOR_URL}{URL}", params=params, timeout=10)
         if resp.status_code == 200:
@@ -18,12 +23,30 @@ def rekuest(URL, params=None):
 
 
 def get_log_entry(log_index, debug=False):
+    """
+    Fetch and return the rekor log entry for a given index.
+
+    Input:
+        log_index   (int)   -   Log index to lookup.
+        debug       (bool)  -   Output debug logs.
+    Returns:
+        (object)            -   Rekor entry log.
+    """
     # verify that log index value is sane
     data = rekuest("/api/v1/log/entries", {"logIndex": log_index})
     return data[list(data.keys())[0]]
 
 
 def get_verification_proof(log_index, debug=False):
+    """
+    Return the inclusion proof stored for a given log. 
+
+    Input:
+        log_index   (int)   -   Log index to lookup.
+        debug       (bool)  -   Output debug logs.
+    Returns:
+        (object)            -   Inclusion proof for the log entry.
+    """
     log_data = get_log_entry(log_index, debug)
 
     proof = log_data["verification"]["inclusionProof"]
@@ -31,6 +54,16 @@ def get_verification_proof(log_index, debug=False):
 
 
 def inclusion(log_index, artifact_filepath, debug=False):
+    """
+    Verify the inclusion proof for a given log.
+
+    Input:
+        log_index           (int)   -   Log index to verify.
+        artifact_filepath   (str)   -   artifact to verify.
+        debug               (bool)  -   Output debug logs.
+    Returns:
+        (bool)                      -   Status of verification.
+    """
     # verify that log index and artifact filepath values are sane
     log_data = get_log_entry(log_index, debug)
     _body = log_data['body']
@@ -48,6 +81,7 @@ def inclusion(log_index, artifact_filepath, debug=False):
         verify_artifact_signature(signature, public_key, artifact_filepath)
     except Exception as e:
         print("Artifact signature verification failed:", e)
+        return False
 
     proof = get_verification_proof(log_index)
 
@@ -62,16 +96,37 @@ def inclusion(log_index, artifact_filepath, debug=False):
                          leaf_hash, hashes, root_hash)
     except Exception as e:
         print("Verify Inclusion failed:", e)
+        return False
 
     print("Offline verification successful")
+    return True
 
 
 def get_latest_checkpoint(debug=False):
+    """
+    Get the latest checkpoint from Rekor's log.
+
+    Returns:
+        (object)    -       Body for the latest checkpoint.
+    """
     data = rekuest("/api/v1/log")
     return data
 
 
 def consistency(prev_checkpoint, debug=False):
+    """
+    Check if the input checkpoint is consistent with the
+    latest checkpoint on Rekor.
+
+    Input:
+        prev_checkpoint (object)    -   Checkpoint: {
+                                            treeSize,
+                                            rootHash,
+                                            treeID,
+                                        }
+    Returns:
+        (object)                    -   Body for the latest checkpoint.
+    """
     # verify that prev checkpoint is not empty
     # get_latest_checkpoint()
     chkpoint = get_latest_checkpoint(debug)
@@ -96,6 +151,7 @@ def consistency(prev_checkpoint, debug=False):
 
 
 def main():
+    """CLI parsing"""
     debug = False
     parser = argparse.ArgumentParser(description="Rekor Verifier")
     parser.add_argument('-d', '--debug', help='Debug mode',
