@@ -8,7 +8,7 @@ import os
 import base64
 import requests
 from util import extract_public_key, verify_artifact_signature
-from merkle_proof import DefaultHasher, verify_consistency, \
+from merkle_proof import DEFAULT_HASHER, verify_consistency, \
     verify_inclusion, compute_leaf_hash, RootMismatchError
 
 REKOR_URL = "https://rekor.sigstore.dev"
@@ -114,12 +114,9 @@ def inclusion(log_index, artifact_filepath, debug=False):
 
     try:
         verify_inclusion(
-            DefaultHasher,
-            proof['logIndex'],
-            proof['treeSize'],
+            DEFAULT_HASHER,
+            proof,
             leaf_hash,
-            proof['hashes'],
-            proof['rootHash']
         )
     except RootMismatchError as e:
         if debug:
@@ -171,7 +168,15 @@ def consistency(prev_checkpoint, debug=False):
     })['hashes']
 
     try:
-        verify_consistency(DefaultHasher, size1, size2, proof, root1, root2)
+        first_tree = {
+            "size": size1,
+            "root": root1
+        }
+        second_tree = {
+            "size": size2,
+            "root": root2
+        }
+        verify_consistency(DEFAULT_HASHER, first_tree, proof, second_tree)
     except RootMismatchError as e:
         print("Consistency verification failed:", e)
 
