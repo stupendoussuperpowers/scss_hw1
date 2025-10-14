@@ -1,3 +1,4 @@
+""" Merkle tree implementation"""
 import hashlib
 import binascii
 import base64
@@ -8,6 +9,8 @@ RFC6962_NODE_HASH_PREFIX = 1
 
 
 class Hasher:
+    """ Hasher """
+
     def __init__(self, hash_func=hashlib.sha256):
         self.hash_func = hash_func
 
@@ -33,11 +36,13 @@ class Hasher:
         return self.new().digest_size
 
 
-# DefaultHasher is a SHA256 based LogHasher
-DefaultHasher = Hasher(hashlib.sha256)
+# DEFAULT_HASHER is a SHA256 based LogHasher
+DEFAULT_HASHER = Hasher(hashlib.sha256)
 
 
-def verify_consistency(hasher, size1, size2, proof, root1, root2):
+def verify_consistency(hasher, first_tree, proof, second_tree):
+    root1, size1 = first_tree['root'], first_tree['size']
+    root2, size2 = second_tree['root'], second_tree['size']
     # change format of args to be bytearray instead of hex strings
     root1 = bytes.fromhex(root1)
     root2 = bytes.fromhex(root2)
@@ -123,12 +128,15 @@ def chain_border_right(hasher, seed, proof):
 
 
 class RootMismatchError(Exception):
+    """Exception handling"""
+
     def __init__(self, expected_root, calculated_root):
         self.expected_root = binascii.hexlify(bytearray(expected_root))
         self.calculated_root = binascii.hexlify(bytearray(calculated_root))
 
     def __str__(self):
-        return f"calculated root:\n{self.calculated_root}\n does not match expected root:\n{self.expected_root}"
+        return f"calculated root:\n{self.calculated_root}\n" \
+            "does not match expected root:\n{self.expected_root}"
 
 
 def root_from_inclusion_proof(hasher, index, size, leaf_hash, proof):
@@ -149,7 +157,11 @@ def root_from_inclusion_proof(hasher, index, size, leaf_hash, proof):
     return res
 
 
-def verify_inclusion(hasher, index, size, leaf_hash, proof, root, debug=False):
+def verify_inclusion(hasher, proof_obj, leaf_hash, debug=False):
+    index = proof_obj['logIndex']
+    size = proof_obj['treeSize']
+    root = proof_obj['rootHash']
+    proof = proof_obj['hashes']
     bytearray_proof = []
     for elem in proof:
         bytearray_proof.append(bytes.fromhex(elem))
@@ -163,11 +175,12 @@ def verify_inclusion(hasher, index, size, leaf_hash, proof, root, debug=False):
         print("Calculated root hash", calc_root.hex())
         print("Given root hash", bytearray_root.hex())
 
-# requires entry["body"] output for a log entry
-# returns the leaf hash according to the rfc 6962 spec
-
 
 def compute_leaf_hash(body):
+    """
+    requires entry["body"] output for a log entry
+    returns the leaf hash according to the rfc 6962 spec
+    """
     entry_bytes = base64.b64decode(body)
 
     # create a new sha256 hash object
