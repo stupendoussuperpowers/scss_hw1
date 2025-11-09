@@ -1,0 +1,11 @@
+repos:
+  - repo: https://github.com/trufflesecurity/trufflehog
+    rev: v3.76.1
+    hooks:
+      - id: trufflehog
+        name: trufflehog secret scanner
+        entry: trufflehog filesystem --no-verification .
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
