@@ -1,11 +1,9 @@
 repos:
-  - repo: https://github.com/trufflesecurity/trufflehog
-    rev: v3.76.1
+  - repo: local
     hooks:
       - id: trufflehog
-        name: trufflehog secret scanner
-        entry: trufflehog filesystem --no-verification .
+        name: TruffleHog Secret Scanner
+        description: Scan staged changes for secrets using TruffleHog
+        entry: bash -c 'trufflehog git file://. --since-commit HEAD --only-verified --fail'
         language: system
-        pass_filenames: false
         stages: [pre-commit]
-
