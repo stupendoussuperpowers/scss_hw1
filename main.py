@@ -98,7 +98,7 @@ def inclusion(log_index, artifact_filepath, debug=False):
     sig_raw = log_json['spec']['signature']['content']
     signature = base64.b64decode(sig_raw)
 
-    cert_raw = log_body['spec']['signature']['publicKey']['content']
+    cert_raw = log_json['spec']['signature']['publicKey']['content']
     certificate = base64.b64decode(cert_raw)
 
     public_key = extract_public_key(certificate)
