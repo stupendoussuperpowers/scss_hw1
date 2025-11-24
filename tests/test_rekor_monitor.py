@@ -12,7 +12,7 @@ from unittest.mock import patch, MagicMock
 
 import requests
 
-import main
+import rekor_scss.main as main
 
 
 checkpoint_schema = {
