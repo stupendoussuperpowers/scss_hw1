@@ -39,3 +39,16 @@ Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for a detailed guide on how t
 
 If reporting a securty issue, please refer to [SECURTY.md](SECURITY.md). 
 
+## Verifying Bundle 
+
+Run:
+
+```
+cosign verify-blob-attestation \
+--bundle dist/sbom-attestation.bundle \
+dist/rekor_scss-0.1.1-py3-none-any.whl \
+--certificate-identity sanchitsahay.tech@gmail.com \
+--certificate-oidc-issuer https://github.com/login/oauth \
+--type cyclonedx \
+--check-claims
+```
