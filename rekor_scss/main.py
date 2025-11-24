@@ -7,8 +7,8 @@ import json
 import os
 import base64
 import requests
-from util import extract_public_key, verify_artifact_signature
-from merkle_proof import DEFAULT_HASHER, verify_consistency, \
+from .util import extract_public_key, verify_artifact_signature
+from .merkle_proof import DEFAULT_HASHER, verify_consistency, \
     verify_inclusion, compute_leaf_hash, RootMismatchError
 
 REKOR_URL = "https://rekor.sigstore.dev"
