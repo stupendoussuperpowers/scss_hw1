@@ -35,7 +35,7 @@ jobs:
           poetry run pylint --ignore-patterns="__init__.py" $(git ls-files '*.py')
 
       - name: Run bandit
-        run: poetry run bandit -r .
+        run: poetry run bandit -r *.py rekor_scss/
 
       - name: TruffleHog OSS
         uses: trufflesecurity/trufflehog@v3.91.2
