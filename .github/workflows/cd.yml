@@ -42,7 +42,7 @@ jobs:
 
       - name: Generate SBOM
         run: |
-          poetry run cyclonedx-py -o cyclonedx-sbom.json -f json
+          poetry run cyclonedx-py poetry > cyclonedx-sbom.json
 
       - name: Attest SBOM
         uses: actions/attest-sbom@v3.0.0
