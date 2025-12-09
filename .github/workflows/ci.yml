@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  ci-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+
+      - name: Install project dependencies
+        run: |
+          poetry install --no-interaction --no-root
+
+      - name: Run black
+        run: poetry run black --check .
+
+      - name: Run ruff format check
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "format --check ."
+
+      - name: Run ruff lint
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check ."
+
+      - name: Run flake8
+        run: poetry run flake8 .
+
+      - name: Run pylint
+        run: |
+          poetry run pylint $(git ls-files '*.py')
+
+      - name: Run bandit
+        run: poetry run bandit -r .
+
+      - name: TruffleHog secret scan
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          path: .
+          fail: true
+
+      - name: Run tests with pytest
+        run: |
+          poetry run pytest --cov=. --cov-report=xml --cov-report=term
+
