@@ -132,8 +132,7 @@ def test_rekor_request_http_error():
     """Test that rekor_request handles HTTP errors"""
     with patch("requests.get") as mock_get:
         mock_response = MagicMock()
-        mock_response.raise_for_status.side_effect = requests.HTTPError(
-            "404 Not Found")
+        mock_response.raise_for_status.side_effect = requests.HTTPError("404 Not Found")
         mock_get.return_value = mock_response
 
         result = main.rekor_request("/api/v1/invalid")
