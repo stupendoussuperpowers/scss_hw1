@@ -48,7 +48,7 @@ jobs:
         uses: actions/attest-sbom@v3.0.0
         with:
           sbom-path: cyclonedx-sbom.json
-          artifact-path: dist/*.whl
+          subject-path: dist/*.whl
 
       - name: Create release
         uses: softprops/action-gh-release@v1
