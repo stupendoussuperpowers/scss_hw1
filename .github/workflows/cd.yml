@@ -45,7 +45,7 @@ jobs:
           poetry run cyclonedx-py -o cyclonedx-sbom.json -f json
 
       - name: Attest SBOM
-        uses: github/attestations/attest-sbom@v1
+        uses: actions/attest-sbom@v3.0.0
         with:
           sbom-path: cyclondex-sbom.json
           artifcat-oath: dist/*.whl
@@ -66,7 +66,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload attestion
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5.0.0
         with:
           name: sbom-attestation
           path: attestations/*.json
