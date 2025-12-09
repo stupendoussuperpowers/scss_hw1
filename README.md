@@ -1,4 +1,14 @@
 # Python Rekor Monitor Template
+
+[![CD](https://github.com/stupendoussuperpowers/scss_hw1/actions/workflows/cd.yml/badge.svg)](https://github.com/stupendoussuperpowers/scss_hw1/actions/workflows/cd.yml)
+
+[![CI](https://github.com/stupendoussuperpowers/scss_hw1/actions/workflows/ci.yml/badge.svg)](https://github.com/stupendoussuperpowers/scss_hw1/actions/workflows/ci.yml)
+
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11588/badge)](https://www.bestpractices.dev/projects/11588)
+
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/stupendoussuperpowers/scss_hw1/badge)](https://scorecard.dev/viewer/?uri=github.com/stupendoussuperpowers/scss_hw1)
+
+
 Github: [https://github.com/stupendoussuperpowers/scss_hw1.git]()
 
 Lightweight CLI tool for interacting with Rekor Transparency Logs. 
