@@ -26,10 +26,9 @@ jobs:
         run: |
           poetry install --no-interaction --no-root
 
-      - name: Run ruff format check
-        uses: astral-sh/ruff-action@v3
-        with:
-          args: "format --check ."
+      - name: Run black formatting check 
+        run: |
+          poetry run black --check .
 
       - name: Run pylint
         run: |

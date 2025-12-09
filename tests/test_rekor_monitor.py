@@ -2,17 +2,15 @@
 Simple test cases for main.py
 """
 
-import json
-import os
 import sys
+from unittest.mock import patch, MagicMock
+
 import pytest
 from jsonschema import validate
-from io import StringIO
-from unittest.mock import patch, MagicMock
 
 import requests
 
-import rekor_scss.main as main
+from rekor_scss import main
 
 
 checkpoint_schema = {
@@ -134,7 +132,8 @@ def test_rekor_request_http_error():
     """Test that rekor_request handles HTTP errors"""
     with patch("requests.get") as mock_get:
         mock_response = MagicMock()
-        mock_response.raise_for_status.side_effect = requests.HTTPError("404 Not Found")
+        mock_response.raise_for_status.side_effect = requests.HTTPError(
+            "404 Not Found")
         mock_get.return_value = mock_response
 
         result = main.rekor_request("/api/v1/invalid")
@@ -150,7 +149,7 @@ def test_main_function():
         main.main()
 
 
-def test_consistency_missing_args(monkeypatch, capsys):
+def test_consistency_missing_args(capsys):
     """Tests that missing consistency args print helpful messages."""
     with patch("sys.argv", ["main.py", "--consistency"]):
         main.main()
