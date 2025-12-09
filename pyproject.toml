@@ -30,6 +30,7 @@ bandit = ">=1.8.6,<2.0.0"
 pytest = ">=9.0.0,<10.0.0"
 jsonschema = ">=4.25.1,<5.0.0"
 pytest-cov = ">=7.0.0,<8.0.0"
+black = "^25.12.0"
 
 [tool.poetry.scripts]
 rekor_scss = "rekor_scss.main:main"

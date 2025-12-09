@@ -1,4 +1,5 @@
-""" Merkle tree implementation"""
+"""Merkle tree implementation"""
+
 import hashlib
 import binascii
 import base64
@@ -9,7 +10,7 @@ RFC6962_NODE_HASH_PREFIX = 1
 
 
 class Hasher:
-    """ Hasher """
+    """Hasher"""
 
     def __init__(self, hash_func=hashlib.sha256):
         self.hash_func = hash_func
@@ -41,8 +42,8 @@ DEFAULT_HASHER = Hasher(hashlib.sha256)
 
 
 def verify_consistency(hasher, first_tree, proof, second_tree):
-    root1, size1 = first_tree['root'], first_tree['size']
-    root2, size2 = second_tree['root'], second_tree['size']
+    root1, size1 = first_tree["root"], first_tree["size"]
+    root2, size2 = second_tree["root"], second_tree["size"]
     # change format of args to be bytearray instead of hex strings
     root1 = bytes.fromhex(root1)
     root2 = bytes.fromhex(root2)
@@ -59,8 +60,10 @@ def verify_consistency(hasher, first_tree, proof, second_tree):
         return
     if size1 == 0:
         if bytearray_proof:
-            raise ValueError(f"expected empty bytearray_proof, but got {
-                             len(bytearray_proof)} components")
+            raise ValueError(
+                f"expected empty bytearray_proof, but got {
+                             len(bytearray_proof)} components"
+            )
         return
     if not bytearray_proof:
         raise ValueError("empty bytearray_proof")
@@ -75,8 +78,10 @@ def verify_consistency(hasher, first_tree, proof, second_tree):
         seed, start = bytearray_proof[0], 1
 
     if len(bytearray_proof) != start + inner + border:
-        raise ValueError(f"wrong bytearray_proof size {len(
-            bytearray_proof)}, want {start + inner + border}")
+        raise ValueError(
+            f"wrong bytearray_proof size {len(
+            bytearray_proof)}, want {start + inner + border}"
+        )
 
     bytearray_proof = bytearray_proof[start:]
 
@@ -97,7 +102,7 @@ def verify_match(calculated, expected):
 
 def decomp_incl_proof(index, size):
     inner = inner_proof_size(index, size)
-    border = bin(index >> inner).count('1')
+    border = bin(index >> inner).count("1")
     return inner, border
 
 
@@ -135,8 +140,10 @@ class RootMismatchError(Exception):
         self.calculated_root = binascii.hexlify(bytearray(calculated_root))
 
     def __str__(self):
-        return f"calculated root:\n{self.calculated_root}\n" \
+        return (
+            f"calculated root:\n{self.calculated_root}\n"
             "does not match expected root:\n{self.expected_root}"
+        )
 
 
 def root_from_inclusion_proof(hasher, index, size, leaf_hash, proof):
@@ -144,13 +151,17 @@ def root_from_inclusion_proof(hasher, index, size, leaf_hash, proof):
         raise ValueError(f"index is beyond size: {index} >= {size}")
 
     if len(leaf_hash) != hasher.size():
-        raise ValueError(f"leaf_hash has unexpected size {
-                         len(leaf_hash)}, want {hasher.size()}")
+        raise ValueError(
+            f"leaf_hash has unexpected size {
+                         len(leaf_hash)}, want {hasher.size()}"
+        )
 
     inner, border = decomp_incl_proof(index, size)
     if len(proof) != inner + border:
-        raise ValueError(f"wrong proof size {
-                         len(proof)}, want {inner + border}")
+        raise ValueError(
+            f"wrong proof size {
+                         len(proof)}, want {inner + border}"
+        )
 
     res = chain_inner(hasher, leaf_hash, proof[:inner], index)
     res = chain_border_right(hasher, res, proof[inner:])
@@ -158,10 +169,10 @@ def root_from_inclusion_proof(hasher, index, size, leaf_hash, proof):
 
 
 def verify_inclusion(hasher, proof_obj, leaf_hash, debug=False):
-    index = proof_obj['logIndex']
-    size = proof_obj['treeSize']
-    root = proof_obj['rootHash']
-    proof = proof_obj['hashes']
+    index = proof_obj["logIndex"]
+    size = proof_obj["treeSize"]
+    root = proof_obj["rootHash"]
+    proof = proof_obj["hashes"]
     bytearray_proof = []
     for elem in proof:
         bytearray_proof.append(bytes.fromhex(elem))
@@ -169,7 +180,8 @@ def verify_inclusion(hasher, proof_obj, leaf_hash, debug=False):
     bytearray_root = bytes.fromhex(root)
     bytearray_leaf = bytes.fromhex(leaf_hash)
     calc_root = root_from_inclusion_proof(
-        hasher, index, size, bytearray_leaf, bytearray_proof)
+        hasher, index, size, bytearray_leaf, bytearray_proof
+    )
     verify_match(calc_root, bytearray_root)
     if debug:
         print("Calculated root hash", calc_root.hex())

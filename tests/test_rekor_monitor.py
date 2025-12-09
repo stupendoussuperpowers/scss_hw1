@@ -22,10 +22,9 @@ checkpoint_schema = {
         "rootHash": {"type": "string"},
         "signedTreeHead": {"type": "string"},
         "treeID": {"type": "string"},
-        "treeSize": {"type": "integer"}
+        "treeSize": {"type": "integer"},
     },
-    "required": ["inactiveShards", "rootHash", "signedTreeHead",
-                 "treeID", "treeSize"]
+    "required": ["inactiveShards", "rootHash", "signedTreeHead", "treeID", "treeSize"],
 }
 
 
@@ -72,8 +71,7 @@ def test_get_log_entry_invalid_string():
 
 def test_inclusion_nonexistent_file():
     """Test inclusion with non-existent artifact file"""
-    result = main.inclusion(
-        123456, "/nonexistent/file.txt", debug=False)
+    result = main.inclusion(123456, "/nonexistent/file.txt", debug=False)
     assert result is False
 
 
@@ -97,7 +95,7 @@ def test_consistency_validation():
     prev_checkpoint = {
         "treeID": current["treeID"],
         "treeSize": max(1, current["treeSize"] - 1000),  # Smaller tree
-        "rootHash": current["rootHash"]
+        "rootHash": current["rootHash"],
     }
 
     main.consistency(prev_checkpoint, debug=False)
@@ -124,7 +122,7 @@ def test_checkpoint_tree_size_is_positive():
 
 def test_rekor_request_timeout():
     """Test that rekor_request handles timeout errors"""
-    with patch('requests.get') as mock_get:
+    with patch("requests.get") as mock_get:
         mock_get.side_effect = TimeoutError("Request timed out")
 
         result = main.rekor_request("/api/v1/test")
@@ -134,10 +132,9 @@ def test_rekor_request_timeout():
 
 def test_rekor_request_http_error():
     """Test that rekor_request handles HTTP errors"""
-    with patch('requests.get') as mock_get:
+    with patch("requests.get") as mock_get:
         mock_response = MagicMock()
-        mock_response.raise_for_status.side_effect = requests.HTTPError(
-            "404 Not Found")
+        mock_response.raise_for_status.side_effect = requests.HTTPError("404 Not Found")
         mock_get.return_value = mock_response
 
         result = main.rekor_request("/api/v1/invalid")
@@ -147,9 +144,9 @@ def test_rekor_request_http_error():
 
 def test_main_function():
     """Test main function with checkpoint flag"""
-    test_args = ['main.py', '--checkpoint']
+    test_args = ["main.py", "--checkpoint"]
 
-    with patch('sys.argv', test_args):
+    with patch("sys.argv", test_args):
         main.main()
 
 
@@ -166,9 +163,12 @@ def test_consistency_with_all_args(monkeypatch):
     with patch.object(main, "consistency") as mock_consistency:
         args = [
             "--consistency",
-            "--tree-id", "123",
-            "--tree-size", "10",
-            "--root-hash", "abc123"
+            "--tree-id",
+            "123",
+            "--tree-size",
+            "10",
+            "--root-hash",
+            "abc123",
         ]
         monkeypatch.setattr(sys, "argv", ["main.py"] + args)
         main.main()

@@ -8,8 +8,13 @@ import os
 import base64
 import requests
 from .util import extract_public_key, verify_artifact_signature
-from .merkle_proof import DEFAULT_HASHER, verify_consistency, \
-    verify_inclusion, compute_leaf_hash, RootMismatchError
+from .merkle_proof import (
+    DEFAULT_HASHER,
+    verify_consistency,
+    verify_inclusion,
+    compute_leaf_hash,
+    RootMismatchError,
+)
 
 REKOR_URL = "https://rekor.sigstore.dev"
 
@@ -50,14 +55,13 @@ def get_log_entry(log_index, debug=False):
     except ValueError:
         print("Invalid log entry")
         return None
-    data = rekor_request("/api/v1/log/entries",
-                         {"logIndex": log_index}, debug=debug)
+    data = rekor_request("/api/v1/log/entries", {"logIndex": log_index}, debug=debug)
     return data[list(data.keys())[0]]
 
 
 def get_verification_proof(log_index, debug=False):
     """
-    Return the inclusion proof stored for a given log. 
+    Return the inclusion proof stored for a given log.
 
     Input:
         log_index   (int)   -   Log index to lookup.
@@ -92,13 +96,13 @@ def inclusion(log_index, artifact_filepath, debug=False):
         print("Artifact is not a file.")
         return False
 
-    log_body = log_data['body']
+    log_body = log_data["body"]
     log_json = json.loads(base64.b64decode(log_body))
 
-    sig_raw = log_json['spec']['signature']['content']
+    sig_raw = log_json["spec"]["signature"]["content"]
     signature = base64.b64decode(sig_raw)
 
-    cert_raw = log_json['spec']['signature']['publicKey']['content']
+    cert_raw = log_json["spec"]["signature"]["publicKey"]["content"]
     certificate = base64.b64decode(cert_raw)
 
     public_key = extract_public_key(certificate)
@@ -155,27 +159,20 @@ def consistency(prev_checkpoint, debug=False):
     # verify that prev checkpoint is not empty
     # get_latest_checkpoint()
     chkpoint = get_latest_checkpoint(debug)
-    size1 = prev_checkpoint['treeSize']
-    size2 = chkpoint['treeSize']
+    size1 = prev_checkpoint["treeSize"]
+    size2 = chkpoint["treeSize"]
 
-    root1 = prev_checkpoint['rootHash']
-    root2 = chkpoint['rootHash']
+    root1 = prev_checkpoint["rootHash"]
+    root2 = chkpoint["rootHash"]
 
-    proof = rekor_request("/api/v1/log/proof", {
-        "lastSize": size2,
-        "firstSize": size1,
-        "treeID": chkpoint["treeID"]
-    })['hashes']
+    proof = rekor_request(
+        "/api/v1/log/proof",
+        {"lastSize": size2, "firstSize": size1, "treeID": chkpoint["treeID"]},
+    )["hashes"]
 
     try:
-        first_tree = {
-            "size": size1,
-            "root": root1
-        }
-        second_tree = {
-            "size": size2,
-            "root": root2
-        }
+        first_tree = {"size": size1, "root": root1}
+        second_tree = {"size": size2, "root": root2}
         verify_consistency(DEFAULT_HASHER, first_tree, proof, second_tree)
     except RootMismatchError as e:
         print("Consistency verification failed:", e)
@@ -187,28 +184,47 @@ def main():
     """CLI parsing"""
     debug = False
     parser = argparse.ArgumentParser(description="Rekor Verifier")
-    parser.add_argument('-d', '--debug', help='Debug mode',
-                        required=False, action='store_true')  # Default false
-    parser.add_argument('-c', '--checkpoint', help='Obtain latest checkpoint\
-                        from Rekor Server public instance',
-                        required=False, action='store_true')
-    parser.add_argument('--inclusion', help='Verify inclusion of an\
+    parser.add_argument(
+        "-d", "--debug", help="Debug mode", required=False, action="store_true"
+    )  # Default false
+    parser.add_argument(
+        "-c",
+        "--checkpoint",
+        help="Obtain latest checkpoint\
+                        from Rekor Server public instance",
+        required=False,
+        action="store_true",
+    )
+    parser.add_argument(
+        "--inclusion",
+        help="Verify inclusion of an\
                         entry in the Rekor Transparency Log using log index\
                         and artifact filename.\
-                        Usage: --inclusion 126574567',
-                        required=False, type=int)
-    parser.add_argument('--artifact', help='Artifact filepath for verifying\
-                        signature',
-                        required=False)
-    parser.add_argument('--consistency', help='Verify consistency of a given\
-                        checkpoint with the latest checkpoint.',
-                        action='store_true')
-    parser.add_argument('--tree-id', help='Tree ID for consistency proof',
-                        required=False)
-    parser.add_argument('--tree-size', help='Tree size for consistency proof',
-                        required=False, type=int)
-    parser.add_argument('--root-hash', help='Root hash for consistency proof',
-                        required=False)
+                        Usage: --inclusion 126574567",
+        required=False,
+        type=int,
+    )
+    parser.add_argument(
+        "--artifact",
+        help="Artifact filepath for verifying\
+                        signature",
+        required=False,
+    )
+    parser.add_argument(
+        "--consistency",
+        help="Verify consistency of a given\
+                        checkpoint with the latest checkpoint.",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--tree-id", help="Tree ID for consistency proof", required=False
+    )
+    parser.add_argument(
+        "--tree-size", help="Tree size for consistency proof", required=False, type=int
+    )
+    parser.add_argument(
+        "--root-hash", help="Root hash for consistency proof", required=False
+    )
     args = parser.parse_args()
     if args.debug:
         debug = True

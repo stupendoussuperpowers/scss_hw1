@@ -1,4 +1,5 @@
-""" Utilities module """
+"""Utilities module"""
+
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -18,18 +19,18 @@ def extract_public_key(cert):
     # load the certificate
     certificate = x509.load_pem_x509_certificate(cert, default_backend())
 
-# extract the public key
+    # extract the public key
     public_key = certificate.public_key()
 
-# save the public key to a PEM file
-#    with open("cert_public.pem", "wb") as pub_key_file:
-#        pub_key_file.write(public_key.public_bytes(
-#            encoding=serialization.Encoding.PEM,
-#            format=serialization.PublicFormat.SubjectPublicKeyInfo
-#        ))
+    # save the public key to a PEM file
+    #    with open("cert_public.pem", "wb") as pub_key_file:
+    #        pub_key_file.write(public_key.public_bytes(
+    #            encoding=serialization.Encoding.PEM,
+    #            format=serialization.PublicFormat.SubjectPublicKeyInfo
+    #        ))
     pem_public_key = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
     )
 
     return pem_public_key
@@ -52,11 +53,7 @@ def verify_artifact_signature(signature, public_key, artifact_filename):
 
     # verify the signature
     try:
-        public_key.verify(
-            signature,
-            data,
-            ec.ECDSA(hashes.SHA256())
-        )
+        public_key.verify(signature, data, ec.ECDSA(hashes.SHA256()))
     except InvalidSignature as e:
         print("Signature is invalid:", e)
         return False
